@@ -33,7 +33,7 @@ ENV MAVEN_HOME=/opt/maven \
 #RUN tar -xvf /tmp/apache-maven-3.2.5.tar.gz && mv apache-maven* /opt
 #RUN tar -xvf /tmp/apache-maven-3.2.5.tar.gz -C ${MAVEN_HOME}
 RUN wget http://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz && \
-	tar -xvf apache-maven-3.2.5.tar.gz && \
+	tar -xvf apache-maven-3.2.5-bin.tar.gz && \
 	rm apache-maven-*.tar.gz && \
 	mv apache-maven-* /opt
 ENV PATH $PATH:${MAVEN_HOME}/bin
