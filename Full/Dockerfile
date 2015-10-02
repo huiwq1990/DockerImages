@@ -4,7 +4,7 @@ FROM centos:centos7
 
 MAINTAINER huiwq1990
 
-EVN PROGRAM_BASE /opt
+ENV PROGRAM_BASE /opt
 
 # Install prepare infrastructure
 RUN yum -y update && \
