@@ -1,7 +1,10 @@
 
 # Centos based container with Java and Tomcat
 FROM centos:centos7
+
 MAINTAINER huiwq1990
+
+EVN PROGRAM_BASE /opt
 
 # Install prepare infrastructure
 RUN yum -y update && \
@@ -13,29 +16,25 @@ RUN yum -y install git && \
 	yum clean all
 
 # Install Oracle Java7
-ENV JAVA_HOME /opt/java
-ENV JAVA_MAJOR=7 \
+
+ENV JAVA_MAJOR=7u71 \
 	JAVA_VERSION=b14
+ENV JAVA_HOME /opt/java
 RUN wget --no-verbose --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" \
-	http://download.oracle.com/otn-pub/java/jdk/7u71-b14/jdk-7u71-linux-x64.tar.gz && \
-	tar -xvf jdk-7u71-linux-x64.tar.gz && \
+	http://download.oracle.com/otn-pub/java/jdk/${JAVA_MAJOR}-${JAVA_VERSION}/jdk-${JAVA_MAJOR}-linux-x64.tar.gz && \
+	tar -xvf jdk-${JAVA_MAJOR}-linux-x64.tar.gz && \
 	rm jdk*.tar.gz && \
 	mv jdk* ${JAVA_HOME}
 ENV PATH $PATH:$JAVA_HOME/bin
 
-# Install maven 3.2.2
-ENV MAVEN_HOME=/opt/maven \
-	MAVEN_VERSION=3.2.5
-#RUN wget -O /tmp/apache-maven-${MAVEN_VERSION}.tar.gz \
-#	http://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz
-# verify checksum
-# RUN echo "87e5cc81bc4ab9b83986b3e77e6b3095 /tmp/apache-maven-${MAVEN_VERSION}.tar.gz" | md5sum -c
-#RUN tar -xvf /tmp/apache-maven-3.2.5.tar.gz && mv apache-maven* /opt
-#RUN tar -xvf /tmp/apache-maven-3.2.5.tar.gz -C ${MAVEN_HOME}
+# Install Maven
+
+ENV	MAVEN_VERSION=3.2.5
+ENV MAVEN_HOME=${PROGRAM_BASE}/apache-maven-${MAVEN_VERSION}
 RUN wget http://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz && \
-	tar -xvf apache-maven-3.2.5-bin.tar.gz && \
+	tar -xvf apache-maven-${MAVEN_VERSION}-bin.tar.gz && \
 	rm apache-maven-*.tar.gz && \
-	mv apache-maven-* /opt
+	mv apache-maven-* ${PROGRAM_BASE}
 ENV PATH $PATH:${MAVEN_HOME}/bin
 
 
@@ -50,22 +49,57 @@ RUN wget http://archive.apache.org/dist/tomcat/tomcat-${TOMCAT_MAJOR}/v$TOMCAT_V
 
 RUN chmod +x ${CATALINA_HOME}/bin/*sh
 
-# Create Tomcat admin user
-ADD create_admin_user.sh $CATALINA_HOME/scripts/create_admin_user.sh
-ADD tomcat.sh $CATALINA_HOME/scripts/tomcat.sh
-RUN chmod +x $CATALINA_HOME/scripts/*.sh
-ENV PATH $PATH:$CATALINA_HOME/bin:$CATALINA_HOME/scripts
+## zookeeper start
+RUN curl -fL http://apache.mirror.digitalpacific.com.au/zookeeper/stable/zookeeper-3.4.6.tar.gz | tar xzf - -C /opt && \
+mv /opt/zookeeper-3.4.6 /opt/zookeeper
 
-# Create tomcat user
-RUN groupadd -r tomcat && \
-	useradd -g tomcat -d ${CATALINA_HOME} -s /sbin/nologin  -c "Tomcat user" tomcat && \
-	chown -R tomcat:tomcat ${CATALINA_HOME}
+COPY docker-zookeeper-entrypoint.sh /docker-zookeeper-entrypoint.sh
+ENTRYPOINT ["/docker-zookeeper-entrypoint.sh"]
 
-WORKDIR /opt/tomcat
+RUN chmod +x /docker-zookeeper-entrypoint.sh
 
-EXPOSE 8080
-EXPOSE 8009
+VOLUME /data/zookeeper
 
-USER tomcat
-CMD ["tomcat.sh"]
-## Install Tomcat End
+WORKDIR /opt/zookeeper/bin
+
+# client port=2181, connect to leader=2888, leader election=3888
+EXPOSE 2181 2888 3888
+CMD ["./zkServer.sh", "start-foreground"]
+## end zookeeper
+
+
+
+
+RUN groupadd -r redis && useradd -r -g redis redis
+
+ENV REDIS_VERSION 3.0.3
+ENV REDIS_DOWNLOAD_URL http://download.redis.io/releases/redis-3.0.3.tar.gz
+ENV REDIS_DOWNLOAD_SHA256 1d08fa665b16d0950274dfbd47fbbcf3485e43e901021338640a0334666e9da5
+
+ADD redis.conf-sane-defaults.patch /tmp/
+
+RUN buildDeps='gcc make glibc-devel patch' \
+  && set -x \
+  && yum install -y $buildDeps \
+  && mkdir -p /usr/src/redis \
+  && curl -sSL "$REDIS_DOWNLOAD_URL" -o redis.tar.gz \
+  && echo "$REDIS_DOWNLOAD_SHA256 *redis.tar.gz" | sha256sum -c - \
+  && tar -xzf redis.tar.gz -C /usr/src/redis --strip-components=1 \
+  && rm redis.tar.gz \
+  && patch -p1 -i /tmp/redis.conf-sane-defaults.patch /usr/src/redis/redis.conf \
+  && rm /tmp/redis.conf-sane-defaults.patch \
+  && make -C /usr/src/redis \
+  && make -C /usr/src/redis PREFIX=/usr install \
+  && cp /usr/src/redis/redis.conf /etc/redis.conf \
+  && rm -r /usr/src/redis \
+  && yum remove -y $buildDeps \
+  && yum clean -y all
+
+# Add systemd support
+ADD redis.service /etc/systemd/system/redis.service
+RUN systemctl enable redis.service
+
+VOLUME /var/lib/redis
+WORKDIR /var/lib/redis
+
+EXPOSE 6379
