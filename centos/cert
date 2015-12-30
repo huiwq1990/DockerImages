@@ -1,0 +1,16 @@
+
+cd ~
+mkdir genhttps
+
+#https://imququ.com/post/letsencrypt-certificate.html 
+
+
+cd genhttps
+openssl genrsa 4096 > account.key
+openssl genrsa 4096 > domain.key
+openssl req -new -sha256 -key domain.key -subj "/" -reqexts SAN -config <(cat /etc/pki/tls/openssl.cnf <(printf "[SAN]\nsubjectAltName=DNS:huiwq1990.com,DNS:www.huiwq1990.com")) > domain.csr
+
+
+
+wget https://raw.githubusercontent.com/diafygi/acme-tiny/master/acme_tiny.py
+python acme_tiny.py --account-key ./account.key --csr ./domain.csr --acme-dir ~/www/challenges/ > ./signed.crt
