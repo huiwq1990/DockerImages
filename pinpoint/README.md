@@ -15,18 +15,30 @@ docker pull dawidmalina/pinpoint-agent
 ## ²éip
 docker inspect --format '{{ .NetworkSettings.IPAddress }}' ${CID}
 
+hbase web port
+60010
+
 https://github.com/dawidmalina/docker-pinpoint
 
-  docker run -d --net=host -p 2181:2181 -p 60000:60000 -p 60010:60010 -p 60020:60020 -p 60030:60030 --name=pinpoint-hbase dawidmalinapinpoint-hbase
 
+## run hbase
+  docker run -d --net=host -p 2181:2181 -p 60000:60000 -p 60010:60010 -p 60020:60020 -p 60030:60030 --name=pinpoint-hbase2 dawidmalina/pinpoint-hbase
+  
+    docker run -d  -p 60000:60000 -p 60010:60010 -p 60020:60020 -p 2181:2181 -p 60030:60030 dawidmalina/pinpoint-hbase 
+
+  ## run collector
     docker run -d --net=host -e HBASE_HOST=127.0.0.1 -e HBASE_PORT=2181 -e COLLECTOR_TCP_PORT=9994 -e COLLECTOR_UDP_STAT_LISTEN_PORT=9995 -e COLLECTOR_UDP_SPAN_LISTEN_PORT=9996 -p 9994:9994 -p 9995:9995/udp -p 9996:9996/udp --name=pinpoint-collector  dawidmalina/pinpoint-collector
 
- docker run -d -p 8080:8080 --net=host -e HBASE_HOST=<HOST_IP> -e HBASE_PORT=2181 --name=pinpoint-web dawidmalina/pinpoint-web
+	
+ docker run -d -p 8080:8080 --net=host -e HBASE_HOST=localhost -e HBASE_PORT=2181 --name=pinpoint-web dawidmalina/pinpoint-web
+for i in `seq 10000`; do        docker pull dawidmalina/pinpoint-web       ; done
 
  
+ 
+  docker run --name=pinpoint-agent pinpoint-agent
  
 ## hbase
-
+
 ```
 
 # DESCRIPTION       Pinpoint APM HBase (Data Storage)
