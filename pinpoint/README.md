@@ -83,3 +83,34 @@ EXPOSE 60030
 CMD /opt/hbase/hbase-$HBASE_VERSION/bin/hbase master start
 
 ```
+
+
+
+
+
+
+
+docker build -t huiwq1990/pinpoint .
+docker run -i -t -p 8080:8080 -p 28080:28080 -p 28081:28081 -p 28082:28082  huiwq1990/pinpoint /bin/bash
+
+
+
+
+
+
+/pinpoint/quickstart/hbase/hbase-1.0.2/bin/start-hbase.sh 
+
+ /pinpoint/quickstart/bin/init-hbase.sh 
+ 
+ 
+  cd /opt/web/bin/
+  ./startup.sh
+  tail -f /opt/web/logs/catalina.out 
+  
+  
+    cd /opt/collector/bin/
+  ./startup.sh
+  tail -f /opt/collector/logs/catalina.out 
+  
+  
+  

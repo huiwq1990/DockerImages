@@ -10,7 +10,6 @@ RUN yum -y update && \
 
 # Prepare environment 
 ENV JAVA_HOME /opt/java
-ENV CATALINA_HOME /opt/tomcat 
 ENV PATH $PATH:$JAVA_HOME/bin:$CATALINA_HOME/bin:$CATALINA_HOME/scripts
 
 # Install Oracle Java7
@@ -22,6 +21,8 @@ RUN wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=acc
 
 
 # Install Tomcat
+
+ENV CATALINA_HOME /opt/tomcat 
 ENV TOMCAT_MAJOR=8 \
 	TOMCAT_VERSION=8.0.20
 RUN wget http://apache-mirror.rbc.ru/pub/apache/tomcat/tomcat-$TOMCAT_MAJOR/v$TOMCAT_VERSION/bin/apache-tomcat-$TOMCAT_VERSION.tar.gz && \

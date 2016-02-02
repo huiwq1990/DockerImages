@@ -70,18 +70,44 @@ RUN git checkout tags/1.5.1
 RUN mvn install -Dmaven.test.skip=true
 
 #hbase
-ENV HBASE_VERSION=1.0.2
+ENV HBASE_VERSION 1.0.2
 WORKDIR quickstart/hbase
-RUN wget http://archive.apache.org/dist/hbase/hbase-1.0.2/hbase-1.0.2-bin.tar.gz 
-RUN tar -zxf hbase-1.0.2-bin.tar.gz
-#RUN rm hbase-1.0.2-bin.tar.gz
-RUN ln -s hbase-1.0.2 hbase
-RUN cp ../conf/hbase/hbase-site.xml hbase-1.0.2/conf/
-RUN chmod +x hbase-1.0.2/bin/start-hbase.sh
+RUN wget http://mirror.bit.edu.cn/apache/hbase/hbase-${HBASE_VERSION}/hbase-${HBASE_VERSION}-bin.tar.gz
+#RUN wget http://archive.apache.org/dist/hbase/hbase-${HBASE_VERSION}/hbase-${HBASE_VERSION}-bin.tar.gz 
+RUN tar -zxf hbase-${HBASE_VERSION}-bin.tar.gz
+#RUN rm hbase-${HBASE_VERSION}-bin.tar.gz
+RUN ln -s hbase-${HBASE_VERSION} hbase
+RUN cp ../conf/hbase/hbase-site.xml hbase-${HBASE_VERSION}/conf/
+RUN chmod +x hbase-${HBASE_VERSION}/bin/start-hbase.sh
 
 
 
+#ENV CATALINA_HOME /opt/tomcat 
+#ENV PATH $PATH:$JAVA_HOME/bin:$CATALINA_HOME/bin:$CATALINA_HOME/scripts
 
+
+# Install Tomcat
+#RUN wget http://apache-mirror.rbc.ru/pub/apache/tomcat/tomcat-7/v7.0.67/bin/apache-tomcat-7.0.67.tar.gz && \
+#	tar -xvf apache-tomcat-7.0.67.tar.gz && \
+#	rm apache-tomcat*.tar.gz && \
+#	mv apache-tomcat* ${CATALINA_HOME} 
+
+#RUN chmod +x ${CATALINA_HOME}/bin/*sh
+
+
+ADD *.war /opt/
+ADD web /opt/web
+ADD collector /opt/collector
+##ENV TOMCAT_FILE apache-tomcat-${TOMCAT_VERSION}.tar.gz
+#ADD $TOMCAT_FILE ${PROGRAM_BASE}
+##RUN tar -xvf apache-tomcat-7.0.67.tar.gz
+#RUN cp -r ${PROGRAM_BASE}/apache-tomcat-7.0.67 ${PROGRAM_BASE}/collector
+
+
+EXPOSE 8080
+EXPOSE 28080
+EXPOSE 28081
+EXPOSE 28082
 
 
 
